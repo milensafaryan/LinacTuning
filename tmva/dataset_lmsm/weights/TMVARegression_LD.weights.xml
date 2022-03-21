@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<MethodSetup Method="LD::LD">
+  <GeneralInfo>
+    <Info name="TMVA Release" value="4.2.1 [262657]"/>
+    <Info name="ROOT Release" value="6.24/00 [399360]"/>
+    <Info name="Creator" value="ralitsa"/>
+    <Info name="Date" value="Wed Jul  7 14:46:13 2021"/>
+    <Info name="Host" value="Darwin macitois21.dyndns.cern.ch 18.7.0 Darwin Kernel Version 18.7.0: Tue Jan 12 22:04:47 PST 2021; root:xnu-4903.278.56~1/RELEASE_X86_64 x86_64"/>
+    <Info name="Dir" value="/Users/ralitsa/linacTune"/>
+    <Info name="Training events" value="2000"/>
+    <Info name="TrainingTime" value="1.25503540e-03"/>
+    <Info name="AnalysisType" value="Regression"/>
+  </GeneralInfo>
+  <Options>
+    <Option name="V" modified="Yes">False</Option>
+    <Option name="VerbosityLevel" modified="No">Default</Option>
+    <Option name="VarTransform" modified="Yes">None</Option>
+    <Option name="H" modified="Yes">False</Option>
+    <Option name="CreateMVAPdfs" modified="No">False</Option>
+    <Option name="IgnoreNegWeightsInTraining" modified="No">False</Option>
+  </Options>
+  <Variables NVar="3">
+    <Variable VarIndex="0" Expression="RFQPAH_R" Label="RFQPAH_R" Title="RFQ phase" Unit="units" Internal="RFQPAH_R" Type="D" Min="1.28002930e+02" Max="1.90002441e+02"/>
+    <Variable VarIndex="1" Expression="RFBPAH_R" Label="RFBPAH_R" Title="buncher phase" Unit="units" Internal="RFBPAH_R" Type="D" Min="2.15844727e+02" Max="2.58264160e+02"/>
+    <Variable VarIndex="2" Expression="V5QSET_R" Label="V5QSET_R" Title="tank5 phase" Unit="units" Internal="V5QSET_R" Type="D" Min="-3.30000000e+01" Max="-2.85000000e+01"/>
+  </Variables>
+  <Spectators NSpec="3">
+    <Spectator SpecIndex="0" Expression="TO1IN_R" Label="spec1" Title="to1in" Unit="units" Internal="spec1" Type="F" Min="2.22277756e+01" Max="2.42592621e+01"/>
+    <Spectator SpecIndex="1" Expression="TO5OUT_R" Label="spec2" Title="to5out" Unit="units" Internal="spec2" Type="F" Min="4.06023216e+00" Max="2.13956585e+01"/>
+    <Spectator SpecIndex="2" Expression="D7TOR_R" Label="spec2" Title="d7tor" Unit="units" Internal="spec2" Type="F" Min="-9.76284714e+01" Max="9.64741821e+01"/>
+  </Spectators>
+  <Classes NClass="1">
+    <Class Name="Regression" Index="0"/>
+  </Classes>
+  <Targets NTrgt="1">
+    <Target TargetIndex="0" Expression="LMSM" Label="LMSM" Title="LMSM" Unit="" Internal="LMSM" Type="F" Min="-3.92456055e+00" Max="7.01812744e+01"/>
+  </Targets>
+  <Transformations NTransformations="0"/>
+  <MVAPdfs/>
+  <Weights NOut="1" NCoeff="4">
+    <Coefficient IndexOut="0" IndexCoeff="0" Value="-7.8532725759479035e+01"/>
+    <Coefficient IndexOut="0" IndexCoeff="1" Value="-8.4277952219929925e-02"/>
+    <Coefficient IndexOut="0" IndexCoeff="2" Value="-2.5557240872261522e-02"/>
+    <Coefficient IndexOut="0" IndexCoeff="3" Value="-3.5559123985966892e+00"/>
+  </Weights>
+</MethodSetup>
