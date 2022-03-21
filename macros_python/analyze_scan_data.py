@@ -2,6 +2,7 @@ import io
 import os,sys,platform
 import numpy as np
 import matplotlib.pyplot as plt
+import functools
 
 def get_colnames(filename,which):
     file = io.open(r'%s'%filename, 'r',encoding="utf-8")
@@ -14,9 +15,11 @@ def get_colnames(filename,which):
         colnames = [col for col in colnames.strip('\n').split(',') if col.find('BPV')!=-1]
     elif which=='bph':
         colnames = [col for col in colnames.strip('\n').split(',') if col.find('BPH')!=-1]
+    elif which=='all':
+        print('Warning: grabbing all columns')
     else:
         colnames = []
-        print('Unrecognized category')
+        print('Invalid argument')
     file.close()
     return colnames
 
@@ -32,10 +35,14 @@ def read_data(filename,which):
         idx = [i for i,col in enumerate(lines[0].strip('\n').split(',')) if col.find('BPV')!=-1]
     elif which=='bph':
         idx = [i for i,col in enumerate(lines[0].strip('\n').split(',')) if col.find('BPH')!=-1]
+    elif which=='all':
+        idx = [i for i in range(len(lines[0].strip('\n').split(',')))]
+        print('Warning: grabbing all columns')
     else:
-        idx = []
-        print('Unrecognized category')
-    
+        colnames = []
+        print('Invalid argument')
+
+        
     x = [[] for i in idx] #diagnostic
     t = [[] for i in idx] #time
 
@@ -155,6 +162,32 @@ def plot_all_dx(idxm,dxm,idxp,dxp,colnames):
 
     plt.show()
 
+def osc():    
+    names = ['reference','rfq_minus5deg','rfq_plus5deg','rfb_minus1deg','rfb_plus1deg']
+    for i in range(1,6):
+        names.append('tank%d_minus1deg'%i)
+        names.append('tank%d_plus1deg'%i)
+
+    path = r'/Users/rshara01-local/Desktop/LINAC_STUDY/BEAM_STUDY_21FEB2022/'
+    files = [ '%s%s.csv'%(path,names[i]) for i in range(len(names))] 
+
+    colnames = get_colnames(files[0],'phase')
+    tref,xref = read_data(files[0],'phase')
+    tm,xm,idxm,dxm = [None]*7,[None]*7,[None]*7,[None]*7
+    tp,xp,idxp,dxp = [None]*7,[None]*7,[None]*7,[None]*7
+    
+    for i in range(1,8):
+        tm[i-1],xm[i-1] = read_data(files[i*2-1],'phase')
+        tp[i-1],xp[i-1] = read_data(files[i*2],'phase')
+        
+        idxm[i-1] = filter_noisy(xm[i-1],1,False)
+        idxp[i-1] = filter_noisy(xp[i-1],1,False)
+
+        dxm[i-1] = calc_delta(xref,xm[i-1],idxm[i-1])
+        dxp[i-1] = calc_delta(xref,xp[i-1],idxp[i-1])
+
+    plot_all_dx(idxm,dxm,idxp,dxp,colnames)
+
 def plot_one_avg(x,idx,colnames,which):
     try:
         x_m = [np.mean(xx) for xx in x if len(xx)>0]
@@ -243,13 +276,10 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
     
     for k,x in enumerate(x_m):
         if k!=kk:
-            if(len(x)==len(x_m[kk])):
-                plt.plot(idx_m[k],np.subtract(x,x_m[kk]),marker = '.',label='%s'%labels[k])
-            else:
-                print(labels[k],' missing readings: ')
-                [print(colnames[m]) for m in idx_m[kk] if m not in idx_m[k]]
-                print('extra readings: ')
-                [print(colnames[m]) for m in idx_m[k] if m not in idx_m[kk]]
+            common = [idx for idx in idx_m[k] if idx in idx_m[kk]]
+            x = [x[i] for i,idx in enumerate(idx_m[k]) if idx in common]
+            xref = [x_m[kk][i] for i,idx in enumerate(idx_m[kk]) if idx in common]
+            plt.plot(common,np.subtract(x,xref),marker = '.',label='%s'%labels[k])
 
                 
     plt.grid(color='k', linestyle='-', linewidth=1.)
@@ -287,7 +317,7 @@ def get_files(path):
         for file in fls:
             if r'BEAM STUDY' in subdir and r'correlatedPulseData' in file:
                 files.append(os.path.join(subdir, file))
-    #files.sort()
+    files.sort()
     return files
 
 def get_labels(files):
@@ -302,40 +332,24 @@ def get_labels(files):
 
     return labels
 
+def check_col_order(files,which):
+    lists =[get_colnames(f,which) for f in files]
+
+    for i in range(len(lists)-1):
+        if functools.reduce(lambda x, y: x and y, map(lambda a, b: a == b, lists[i], lists[i+1]), True):
+            continue
+        else:
+            print("Column names not in the same order! Check input data.")
+
 def main():
 
     path = r'/Users/rshara01-local/Desktop/LINAC_STUDY/'
     files = get_files(path)
+
     #filter_and_plot_multiFile(files,1,2.5,'phase','07MAR2022')
     #filter_and_plot_multiFile(files,1,2.5,'blm','07MAR2022')
     filter_and_plot_multiFile(files,1,2.5,'bph','07MAR2022')
     #filter_and_plot_multiFile(files,1,2.5,'bpv','07MAR2022')
-
-def osc():    
-    names = ['reference','rfq_minus5deg','rfq_plus5deg','rfb_minus1deg','rfb_plus1deg']
-    for i in range(1,6):
-        names.append('tank%d_minus1deg'%i)
-        names.append('tank%d_plus1deg'%i)
-
-    path = r'/Users/rshara01-local/Desktop/LINAC_STUDY/BEAM_STUDY_21FEB2022/'
-    files = [ '%s%s.csv'%(path,names[i]) for i in range(len(names))] 
-
-    colnames = get_colnames(files[0],'phase')
-    tref,xref = read_data(files[0],'phase')
-    tm,xm,idxm,dxm = [None]*7,[None]*7,[None]*7,[None]*7
-    tp,xp,idxp,dxp = [None]*7,[None]*7,[None]*7,[None]*7
-    
-    for i in range(1,8):
-        tm[i-1],xm[i-1] = read_data(files[i*2-1],'phase')
-        tp[i-1],xp[i-1] = read_data(files[i*2],'phase')
-        
-        idxm[i-1] = filter_noisy(xm[i-1],1,False)
-        idxp[i-1] = filter_noisy(xp[i-1],1,False)
-
-        dxm[i-1] = calc_delta(xref,xm[i-1],idxm[i-1])
-        dxp[i-1] = calc_delta(xref,xp[i-1],idxp[i-1])
-
-    plot_all_dx(idxm,dxm,idxp,dxp,colnames)
 
     
 
