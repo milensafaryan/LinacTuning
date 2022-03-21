@@ -1,5 +1,5 @@
 import io
-import os,sys
+import os,sys,platform
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -113,7 +113,7 @@ def plot_phases_norm(t,x,colnames,start,stop):
         try:
             #xnorm = (xnorm - xnorm.min(0)) / xnorm.ptp(0)
             xnorm = (xnorm - xnorm.min(0))
-        except ValueError:  #raised if xnorm is empty.
+        except ValueError:
             pass
         
         plt.plot(t[i][:],xnorm[:],label='%s'%colnames[i])
@@ -214,15 +214,15 @@ def filter_and_plot_singleFile(filename,thresh,m,which):
 
 
 def filter_and_plot_multiFile(files,thresh,m,which,REF):
-
+    plt.rcParams["figure.figsize"] = (10,6)
+    
     colnames = get_colnames(files[0], which)
     labels=[]
     for f in files:
-        if len(f.split('_'))>2:
-            labels.append('%s_%s'%(f.split('/')[5].split(' ')[2],f.split('_')[-1].strip('.csv')))
+        if platform.system()=='Windows':
+            labels.append(''.join([f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[0].strip('\\'),f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[-1].strip('.csv')]))
         else:
-            labels.append(f.split('/')[5].split(' ')[2])
-
+            labels.append(''.join([f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[0].strip('/'),f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[-1].strip('.csv')]))
     kk = int([i for i,s in enumerate(labels) if REF in s][0])
             
     listt = [None]*len(files)
@@ -286,15 +286,19 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
     plt.show()
 
 
-def main():
-
-    path = r'/Users/rshara01-local/Desktop/LINAC_STUDY/'
+def get_files(path):
     files =[]
     for subdir, dirs, fls in os.walk(path):
         for file in fls:
             if r'BEAM STUDY' in subdir and r'correlatedPulseData' in file:
                 files.append(os.path.join(subdir, file))
-                    
+    return files
+    
+def main():
+
+    path = r'/Users/rshara01-local/Desktop/LINAC_STUDY/'
+    files = get_files(path)
+    
     #filter_and_plot_multiFile(files,1,2.5,'phase','07MAR2022')
     #filter_and_plot_multiFile(files,1,2.5,'blm','07MAR2022')
     filter_and_plot_multiFile(files,1,2.5,'bph','07MAR2022')
