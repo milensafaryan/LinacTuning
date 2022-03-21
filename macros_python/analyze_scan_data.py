@@ -217,12 +217,8 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
     plt.rcParams["figure.figsize"] = (10,6)
     
     colnames = get_colnames(files[0], which)
-    labels=[]
-    for f in files:
-        if platform.system()=='Windows':
-            labels.append(''.join([f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[0].strip('\\'),f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[-1].strip('.csv')]))
-        else:
-            labels.append(''.join([f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[0].strip('/'),f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[-1].strip('.csv')]))
+    labels = get_labels(files)
+
     kk = int([i for i,s in enumerate(labels) if REF in s][0])
             
     listt = [None]*len(files)
@@ -241,7 +237,7 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
         # remove outlier samples
         t,x = reject_outliers(t,x,0,len(x),m)
     
-        #plot averages
+        #get averages
         x_m[k] = [np.mean(xx) for xx in x if len(xx)>0]
         idx_m[k] = [idx[j] for j,xx in enumerate(x) if len(xx)>0 ]
     
@@ -250,10 +246,9 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
             if(len(x)==len(x_m[kk])):
                 plt.plot(idx_m[k],np.subtract(x,x_m[kk]),marker = '.',label='%s'%labels[k])
             else:
-                print(labels[k])
-                print('missing: ')
+                print(labels[k],' missing readings: ')
                 [print(colnames[m]) for m in idx_m[kk] if m not in idx_m[k]]
-                print('extra: ')
+                print('extra readings: ')
                 [print(colnames[m]) for m in idx_m[k] if m not in idx_m[kk]]
 
                 
@@ -292,13 +287,25 @@ def get_files(path):
         for file in fls:
             if r'BEAM STUDY' in subdir and r'correlatedPulseData' in file:
                 files.append(os.path.join(subdir, file))
+    #files.sort()
     return files
-    
+
+def get_labels(files):
+    labels = []
+    for f in files:
+        if platform.system()=='Windows':
+            labels.append(''.join([f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[0].strip('\\'),
+                                   f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[-1].strip('.csv')]))
+        else:
+            labels.append(''.join([f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[0].strip('/'),
+                                   f.split('BEAM STUDY ')[-1].split('correlatedPulseData')[-1].strip('.csv')]))
+
+    return labels
+
 def main():
 
     path = r'/Users/rshara01-local/Desktop/LINAC_STUDY/'
     files = get_files(path)
-    
     #filter_and_plot_multiFile(files,1,2.5,'phase','07MAR2022')
     #filter_and_plot_multiFile(files,1,2.5,'blm','07MAR2022')
     filter_and_plot_multiFile(files,1,2.5,'bph','07MAR2022')
