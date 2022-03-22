@@ -225,6 +225,9 @@ def plot_one_avg(x,idx,colnames,which):
     plt.show()
     
 def filter_and_plot_singleFile(filename,thresh,m,which):
+    plt.rc("figure",figsize=(10,6))
+    plt.rc("axes",prop_cycle= plt.cycler("color", plt.cm.tab20.colors))
+    
     colnames = get_colnames(filename,which)
     t,x = read_data(filename,which)
     # remove noisy
@@ -247,7 +250,8 @@ def filter_and_plot_singleFile(filename,thresh,m,which):
 
 
 def filter_and_plot_multiFile(files,thresh,m,which,REF):
-    plt.rcParams["figure.figsize"] = (10,6)
+    plt.rc("figure",figsize=(10,6))
+    plt.rc("axes",prop_cycle= plt.cycler("color", plt.cm.tab20.colors))
     
     colnames = get_colnames(files[0], which)
     labels = get_labels(files)
@@ -351,6 +355,7 @@ def main():
     filter_and_plot_multiFile(files,1,2.5,'bph','07MAR2022')
     #filter_and_plot_multiFile(files,1,2.5,'bpv','07MAR2022')
 
+    #filter_and_plot_singleFile(files[0],1,2.5,'bph')
     
 
 if __name__ == "__main__":
