@@ -189,7 +189,7 @@ def filter_and_plot_singleFile(filename,thresh,m,which):
 
 
 def filter_and_plot_multiFile(files,thresh,m,which,REF):
-    plt.rc("figure",figsize=(10,10))
+    plt.rc("figure",figsize=(20,10))
     plt.rc("axes",prop_cycle= plt.cycler("color", plt.cm.tab20.colors))
     
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -229,6 +229,8 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
             axs[k%12][int(k/12)].fill_between(idx,delta,facecolor=colors[k],label='%s'%labels[k])
             axs[k%12][int(k/12)].legend(loc='upper left', fancybox=True, fontsize='small')
             axs[k%12][int(k/12)].xaxis.set_tick_params(direction='in', which='major')
+            if k==11 or k==23:
+                axs[k%12][int(k/12)].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
             axs[k%12][int(k/12)].grid(True)
             
             if which=='phase':
@@ -249,11 +251,11 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
                 fig.suptitle('BLMs')
 
     #plt.grid(color='k', linestyle='-', linewidth=1.)
-    plt.xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
+    #plt.xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
     plt.subplots_adjust(wspace=0, hspace=0)
     plt.subplots_adjust(bottom=0.1)
     plt.subplots_adjust(top=0.95)
-    plt.subplots_adjust(left=0.1)
+    plt.subplots_adjust(left=0.06)
     plt.subplots_adjust(right=0.98)
     plt.show()
 
