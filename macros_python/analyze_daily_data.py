@@ -104,31 +104,6 @@ def plot_phases_norm(df,start,stop):
     plt.show()
                          
 
-def plot_all_dx(idxm,dxm,idxp,dxp,colnames):
-    fig, axs = plt.subplots(7,1,sharex=True)
-    fig.set_size_inches(12.,8.)
-    fig.supylabel(r'$\Delta')
-                
-    labels = ['RFQ','RFB','Tank1','Tank2','Tank3','Tank4','Tank5']
-    for i in range(7):
-        axs[i].plot(idxm[i],dxm[i],label='%s Minus 1 deg'%labels[i])
-        axs[i].plot(idxp[i],dxp[i],label='%s Plus 1 deg'%labels[i])
-        pxs[i].legend(loc='upper right', fancybox=True, fontsize='small')
-
-    for i,ax in enumerate(axs.flat):
-        ax.set_title(labels[i], y=1.0, pad=-14)
-        ax.label_outer()
-
-    ticks = [i for i in range(len(colnames))]
-    plt.xticks(ticks,colnames, rotation = 'vertical')
-    plt.subplots_adjust(bottom=0.13)
-    plt.subplots_adjust(top=0.94)
-    plt.subplots_adjust(left=0.1)
-    plt.subplots_adjust(right=0.95)
-
-    plt.show()
-
-
 def plot_one_avg(df,which):
     colnames = [col for col in list(df.keys()) if col.find('Time')==-1]    
     try:
@@ -206,15 +181,14 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
 
     fig, axs = plt.subplots(int(len(labels)/2),2,sharex=True, sharey=True)
 
+    print(len(listdf))
     for k,df in enumerate(listdf):
-        #print('df%d Before cuts '%k,df.keys())
         # remove outlier samples
-        reject_outliers(df,m)
+        #reject_outliers(df,m)
         # remove noisy
         filter_noisy(df,thresh,False)
-        #print('df%d After cuts '%k,df.keys())
 
-        if k>18:
+        if k>19:
             break
         delta = []
         idx = []
@@ -225,7 +199,6 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
                         delta.append(np.median(df[col]) - np.median(listdf[kk][col]))
                         idx.append(l)
             
-            #axs[k].plot(idx,delta,marker = '.',linestyle='-',label='%s'%labels[k])
             axs[k%12][int(k/12)].fill_between(idx,delta,facecolor=colors[k],label='%s'%labels[k])
             axs[k%12][int(k/12)].legend(loc='upper left', fancybox=True, fontsize='small')
             axs[k%12][int(k/12)].xaxis.set_tick_params(direction='in', which='major')
@@ -250,8 +223,6 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
                 fig.supylabel('Delta Loss (cnt)')
                 fig.suptitle('BLMs')
 
-    #plt.grid(color='k', linestyle='-', linewidth=1.)
-    #plt.xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
     plt.subplots_adjust(wspace=0, hspace=0)
     plt.subplots_adjust(bottom=0.1)
     plt.subplots_adjust(top=0.95)
