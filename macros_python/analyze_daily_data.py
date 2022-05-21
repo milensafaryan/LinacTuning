@@ -1,4 +1,3 @@
-import io
 import os,sys,platform
 import numpy as np
 import matplotlib.pyplot as plt
@@ -133,7 +132,7 @@ def plot_all_dx(idxm,dxm,idxp,dxp,colnames):
 def plot_one_avg(df,which):
     colnames = [col for col in list(df.keys()) if col.find('Time')==-1]    
     try:
-        x_m = [np.mean(df[col]) for col in colnames if len(df[col])>0]
+        x_m = [np.median(df[col]) for col in colnames if len(df[col])>0]
         idx = [j for j,col in enumerate(colnames) if len(df[col])>0 ]
     except ValueError:
         pass
@@ -190,8 +189,10 @@ def filter_and_plot_singleFile(filename,thresh,m,which):
 
 
 def filter_and_plot_multiFile(files,thresh,m,which,REF):
-    plt.rc("figure",figsize=(10,6))
+    plt.rc("figure",figsize=(10,10))
     plt.rc("axes",prop_cycle= plt.cycler("color", plt.cm.tab20.colors))
+    
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     
     labels = get_labels(files)
 
@@ -202,50 +203,58 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
     for i in range(len(files)):
         listdf[i] = read_data(files[i],which)
     colnames = [col for col in list(listdf[kk].keys()) if col.find('Time')==-1] # reference
-        
+
+    fig, axs = plt.subplots(int(len(labels)/2),2,sharex=True, sharey=True)
+
     for k,df in enumerate(listdf):
-        # remove noisy
-        filter_noisy(df,thresh,False)
+        #print('df%d Before cuts '%k,df.keys())
         # remove outlier samples
         reject_outliers(df,m)
-        print('df%d: '%k,df.keys())
-        
+        # remove noisy
+        filter_noisy(df,thresh,False)
+        #print('df%d After cuts '%k,df.keys())
+
+        if k>18:
+            break
         delta = []
         idx = []
         if k!=kk:
             for l,col in enumerate(colnames):
-                if col in list(df.keys()):
-                    delta.append(np.median(df[col]) - np.median(listdf[kk][col]))
-                    idx.append(l)
+                if col in list(df.keys()) and col in list(listdf[kk].keys()):
+                    if len(df[col])>0 and len(listdf[kk][col])>0:
+                        delta.append(np.median(df[col]) - np.median(listdf[kk][col]))
+                        idx.append(l)
             
-            plt.plot(idx,delta,marker = '.',linestyle='None',label='%s'%labels[k])
+            #axs[k].plot(idx,delta,marker = '.',linestyle='-',label='%s'%labels[k])
+            axs[k%12][int(k/12)].fill_between(idx,delta,facecolor=colors[k],label='%s'%labels[k])
+            axs[k%12][int(k/12)].legend(loc='upper left', fancybox=True, fontsize='small')
+            axs[k%12][int(k/12)].xaxis.set_tick_params(direction='in', which='major')
+            axs[k%12][int(k/12)].grid(True)
+            
+            if which=='phase':
+                axs[k%12][int(k/12)].set_ylim(-3,3)
+                fig.supylabel(' Delta Phase (deg)')
+                fig.suptitle('BPM phases',fontsize=12)
+            elif which=='bpv':    
+                axs[k].set_ylim(-10.,10)
+                fig.supylabel('Delta Y (mm)')    
+                fig.suptitle("BPM Vertical positions")
+            elif which=='bph':
+                axs[k].set_ylim(-10.,10)
+                fig.supylabel('Delta X (mm)')    
+                fig.suptitle("BPM Horizontal positions")
+            elif which=='blm':
+                axs[k].set_ylim(-10,10)
+                fig.supylabel('Delta Loss (cnt)')
+                fig.suptitle('BLMs')
 
-                
-    plt.grid(color='k', linestyle='-', linewidth=1.)
-
-    if which=='phase':
-        plt.ylim(-10,10)
-        plt.ylabel('Phase (deg)')
-        plt.title('BPM phases')
-    elif which=='bpv':    
-        plt.ylim(-10.,10)
-        plt.ylabel('Y (mm)')    
-        plt.title("BPM Vertical positions")
-    elif which=='bph':
-        plt.ylim(-10.,10)
-        plt.ylabel('X (mm)')    
-        plt.title("BPM Horizontal positions")
-    elif which=='blm':
-        plt.ylim(-10,10)
-        plt.ylabel('Loss (cnt)')
-        plt.title('BLMs')
-    
+    #plt.grid(color='k', linestyle='-', linewidth=1.)
     plt.xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
-    plt.subplots_adjust(bottom=0.2)
-    plt.subplots_adjust(top=0.94)
-    plt.subplots_adjust(left=0.11)
-    plt.subplots_adjust(right=0.95)
-    plt.legend(loc='best',ncol = 4, fancybox=True, fontsize='small')
+    plt.subplots_adjust(wspace=0, hspace=0)
+    plt.subplots_adjust(bottom=0.1)
+    plt.subplots_adjust(top=0.95)
+    plt.subplots_adjust(left=0.1)
+    plt.subplots_adjust(right=0.98)
     plt.show()
 
 
@@ -258,14 +267,14 @@ def get_files(path,date):
             if datestr in file:
                 files.append(os.path.join(subdir,file))
     files.sort()
-    return files[:6]
+    return files[:]
 
 def get_labels(files):
     labels = []
     for f in files:
         labels.append('%s:%s'%(f.split('-')[-1].split('_')[0],f.split('-')[-1].split('_')[1]))
 
-    return labels[:6]
+    return labels[:]
 
 def check_col_order(files,which):
     lists =[get_colnames(f,which) for f in files]
@@ -283,7 +292,7 @@ def main():
 
     files = get_files(path,date)
 
-    filter_and_plot_multiFile(files,1,3,'phase','00:00')
+    filter_and_plot_multiFile(files,200,3,'phase','00:00')
     #filter_and_plot_multiFile(files,1,2.5,'blm','07MAR2022')
     #filter_and_plot_multiFile(files,1,2.5,'bph','07MAR2022')
     #filter_and_plot_multiFile(files,1,2.5,'bpv','07MAR2022')
