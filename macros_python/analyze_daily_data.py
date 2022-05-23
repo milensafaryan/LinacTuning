@@ -1,7 +1,8 @@
 import os,sys,platform
+import functools
 import numpy as np
 import matplotlib.pyplot as plt
-import functools
+import matplotlib.colors as mcolors
 from datetime import datetime
 import pandas as pd
 
@@ -165,10 +166,11 @@ def filter_and_plot_singleFile(filename,thresh,m,which):
 
 def filter_and_plot_multiFile(files,thresh,m,which,REF):
     plt.rc("figure",figsize=(20,10))
-    plt.rc("axes",prop_cycle= plt.cycler("color", plt.cm.tab20.colors))
-    
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-    
+    overlap = {name for name in mcolors.CSS4_COLORS
+               if f'xkcd:{name}' in mcolors.XKCD_COLORS}
+
+    overlap.difference_update(['aqua','ivory','white','lime','chocolate','gold'])
+    colors = [mcolors.XKCD_COLORS[f'xkcd:{color_name}'].upper() for color_name in sorted(overlap)]    
     labels = get_labels(files)
 
     kk = int([i for i,s in enumerate(labels) if REF in s][0])
@@ -181,15 +183,12 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
 
     fig, axs = plt.subplots(int(len(labels)/2),2,sharex=True, sharey=True)
 
-    print(len(listdf))
     for k,df in enumerate(listdf):
         # remove outlier samples
         #reject_outliers(df,m)
         # remove noisy
         filter_noisy(df,thresh,False)
 
-        if k>19:
-            break
         delta = []
         idx = []
         if k!=kk:
@@ -211,15 +210,15 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
                 fig.supylabel(' Delta Phase (deg)')
                 fig.suptitle('BPM phases',fontsize=12)
             elif which=='bpv':    
-                axs[k].set_ylim(-10.,10)
+                axs[k%12][int(k/12)].set_ylim(-1.,1)
                 fig.supylabel('Delta Y (mm)')    
                 fig.suptitle("BPM Vertical positions")
             elif which=='bph':
-                axs[k].set_ylim(-10.,10)
+                axs[k%12][int(k/12)].set_ylim(-1.,1)
                 fig.supylabel('Delta X (mm)')    
                 fig.suptitle("BPM Horizontal positions")
             elif which=='blm':
-                axs[k].set_ylim(-10,10)
+                axs[k%12][int(k/12)].set_ylim(-3,3)
                 fig.supylabel('Delta Loss (cnt)')
                 fig.suptitle('BLMs')
 
@@ -265,10 +264,10 @@ def main():
 
     files = get_files(path,date)
 
-    filter_and_plot_multiFile(files,200,3,'phase','00:00')
-    #filter_and_plot_multiFile(files,1,2.5,'blm','07MAR2022')
-    #filter_and_plot_multiFile(files,1,2.5,'bph','07MAR2022')
-    #filter_and_plot_multiFile(files,1,2.5,'bpv','07MAR2022')
+    #filter_and_plot_multiFile(files,200,3,'phase','00:00')
+    #filter_and_plot_multiFile(files,10,3,'blm','00:00')
+    filter_and_plot_multiFile(files,10,3,'bph','00:00')
+    filter_and_plot_multiFile(files,10,3,'bpv','00:00')
 
     #filter_and_plot_singleFile(files[4],1,3,'bph')
     #filter_and_plot_singleFile(files[4],1,3,'bpv')
