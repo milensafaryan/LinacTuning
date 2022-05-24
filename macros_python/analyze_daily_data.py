@@ -181,7 +181,8 @@ def filter_and_plot_multiFile(files,thresh,m,which):
 
     colnames = [col for col in list(listdf[0].keys()) if col.find('Time')==-1] # reference
 
-    fig, axs = plt.subplots(int(len(listdf)/2),2,sharex=True, sharey=True)
+    numcol = int(len(listdf)/2) if len(listdf)%2==0 else int(len(listdf)/2)+1
+    fig, axs = plt.subplots(numcol,2,sharex=True, sharey=True)
 
     print(len(listdf), len(listdf)/2)
 
@@ -203,7 +204,7 @@ def filter_and_plot_multiFile(files,thresh,m,which):
             axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].fill_between(idx,delta,facecolor=colors[k],label='%s'%labels[k])
             axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].legend(loc='upper left', fancybox=True, fontsize='small')
             axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].xaxis.set_tick_params(direction='in', which='major')
-            if k==(len(listdf)/2-1) or k==(len(listdf)-1):
+            if k==(numcol-1) or (k==(numcol*2-1) and numcol==int(len(listdf)/2)) or (k==(numcol*2-2) and numcol==int(len(listdf)/2+1)):
                 axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
             axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].grid(True)
             
