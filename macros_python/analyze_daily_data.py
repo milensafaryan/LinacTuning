@@ -1,9 +1,10 @@
 import os,sys,platform
 import functools
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 
 def read_data(filename,which):
@@ -164,8 +165,8 @@ def filter_and_plot_singleFile(filename,thresh,m,which):
     plot_one_avg(df,which)
 
 
-def filter_and_plot_multiFile(files,thresh,m,which,REF):
-    plt.rc("figure",figsize=(20,10))
+def filter_and_plot_multiFile(files,thresh,m,which):
+    plt.rc("figure",figsize=(20,12))
     overlap = {name for name in mcolors.CSS4_COLORS
                if f'xkcd:{name}' in mcolors.XKCD_COLORS}
 
@@ -173,15 +174,16 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
     colors = [mcolors.XKCD_COLORS[f'xkcd:{color_name}'].upper() for color_name in sorted(overlap)]    
     labels = get_labels(files)
 
-    kk = int([i for i,s in enumerate(labels) if REF in s][0])
-            
     listdf = [None]*len(files)
     
     for i in range(len(files)):
         listdf[i] = read_data(files[i],which)
-    colnames = [col for col in list(listdf[kk].keys()) if col.find('Time')==-1] # reference
 
-    fig, axs = plt.subplots(int(len(labels)/2),2,sharex=True, sharey=True)
+    colnames = [col for col in list(listdf[0].keys()) if col.find('Time')==-1] # reference
+
+    fig, axs = plt.subplots(int(len(listdf)/2),2,sharex=True, sharey=True)
+
+    print(len(listdf), len(listdf)/2)
 
     for k,df in enumerate(listdf):
         # remove outlier samples
@@ -191,34 +193,34 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
 
         delta = []
         idx = []
-        if k!=kk:
+        if k!=0:
             for l,col in enumerate(colnames):
-                if col in list(df.keys()) and col in list(listdf[kk].keys()):
-                    if len(df[col])>0 and len(listdf[kk][col])>0:
-                        delta.append(np.median(df[col]) - np.median(listdf[kk][col]))
+                if col in list(df.keys()) and col in list(listdf[0].keys()):
+                    if len(df[col])>0 and len(listdf[0][col])>0:
+                        delta.append(np.median(df[col]) - np.median(listdf[0][col]))
                         idx.append(l)
             
-            axs[k%12][int(k/12)].fill_between(idx,delta,facecolor=colors[k],label='%s'%labels[k])
-            axs[k%12][int(k/12)].legend(loc='upper left', fancybox=True, fontsize='small')
-            axs[k%12][int(k/12)].xaxis.set_tick_params(direction='in', which='major')
-            if k==11 or k==23:
-                axs[k%12][int(k/12)].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
-            axs[k%12][int(k/12)].grid(True)
+            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].fill_between(idx,delta,facecolor=colors[k],label='%s'%labels[k])
+            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].legend(loc='upper left', fancybox=True, fontsize='small')
+            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].xaxis.set_tick_params(direction='in', which='major')
+            if k==(len(listdf)/2-1) or k==(len(listdf)-1):
+                axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
+            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].grid(True)
             
             if which=='phase':
-                axs[k%12][int(k/12)].set_ylim(-3,3)
+                axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-3,3)
                 fig.supylabel(' Delta Phase (deg)')
                 fig.suptitle('BPM phases',fontsize=12)
             elif which=='bpv':    
-                axs[k%12][int(k/12)].set_ylim(-1.,1)
+                axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-1.,1)
                 fig.supylabel('Delta Y (mm)')    
                 fig.suptitle("BPM Vertical positions")
             elif which=='bph':
-                axs[k%12][int(k/12)].set_ylim(-1.,1)
+                axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-1.,1)
                 fig.supylabel('Delta X (mm)')    
                 fig.suptitle("BPM Horizontal positions")
             elif which=='blm':
-                axs[k%12][int(k/12)].set_ylim(-3,3)
+                axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-3,3)
                 fig.supylabel('Delta Loss (cnt)')
                 fig.suptitle('BLMs')
 
@@ -227,26 +229,32 @@ def filter_and_plot_multiFile(files,thresh,m,which,REF):
     plt.subplots_adjust(top=0.95)
     plt.subplots_adjust(left=0.06)
     plt.subplots_adjust(right=0.98)
-    plt.show()
+    #plt.show()
 
+    plt.savefig('%s_%s_%s.png'%(labels[-1].split(' ')[0].replace('/','-'),labels[-1].split(' ')[1].replace(':','-'),which))
 
 def get_files(path,date):
     files =[]
-    datestr = date.strftime('%Y_%m_%d')
+    datestr= [date.strftime('%Y_%m_%d-%H')]
+    for i in range(1,24):
+        date = date - timedelta(hours=1)
+        datestr.append(date.strftime('%Y_%m_%d-%H'))
 
     for subdir, dirs, fls in os.walk(path):
         for file in fls:
-            if datestr in file:
-                files.append(os.path.join(subdir,file))
+            for ds in datestr:
+                if ds in file:
+                    files.append(os.path.join(subdir,file))
     files.sort()
-    return files[:]
+    return files
 
 def get_labels(files):
     labels = []
     for f in files:
-        labels.append('%s:%s'%(f.split('-')[-1].split('_')[0],f.split('-')[-1].split('_')[1]))
+        datestr = f.split('/')[-1].split('-')[0].replace('_','/')
+        labels.append('%s %s:%s'%(datestr,f.split('-')[-1].split('_')[0],f.split('-')[-1].split('_')[1]))
 
-    return labels[:]
+    return labels
 
 def check_col_order(files,which):
     lists =[get_colnames(f,which) for f in files]
@@ -257,24 +265,44 @@ def check_col_order(files,which):
         else:
             print("Column names not in the same order! Check input data.")
 
+
+def parse_args():
+
+    parser = argparse.ArgumentParser(description="usage: %prog [options] \n")
+    parser.add_argument ('--i',  dest='datadir', default='/accelai/data/rshara01',
+                         help="Input data directory path")
+    parser.add_argument ('--d', dest='date', default='',
+                         help="End date/time to plot. Format %Y_%m_%d-%H")
+    #parser.add_argument ('--o',  dest='imgdir', default='',
+    #                     help="Image save directory")
+
+    options = parser.parse_args()
+    datadir = options.datadir
+    datestr = options.date
+    #imgdir  = options.imgdir
+
+    if datestr =='':
+        date = datetime.today()
+    else:
+        try:
+            date = datetime.strptime(datestr,'%Y_%m_%d-%H_%M_%S')
+        except:
+            print('Invalid date format. Using default.')
+            date = datetime.today()
+
+    return datadir,date
+
 def main():
-
-    path = r'/Users/rshara01-local/Desktop/LINAC_STUDY/Daily_snapshots'
-    date = datetime.strptime('2022-05-18','%Y-%m-%d')
-
+    
+    path,date = parse_args()
     files = get_files(path,date)
 
-    #filter_and_plot_multiFile(files,200,3,'phase','00:00')
-    #filter_and_plot_multiFile(files,10,3,'blm','00:00')
-    filter_and_plot_multiFile(files,10,3,'bph','00:00')
-    filter_and_plot_multiFile(files,10,3,'bpv','00:00')
+    filter_and_plot_multiFile(files,100,3,'phase')
+    filter_and_plot_multiFile(files,10,3,'blm')
+    filter_and_plot_multiFile(files,10,3,'bph')
+    filter_and_plot_multiFile(files,10,3,'bpv')
 
     #filter_and_plot_singleFile(files[4],1,3,'bph')
-    #filter_and_plot_singleFile(files[4],1,3,'bpv')
-    #filter_and_plot_singleFile(files[0],100,3,'phase')
-    #filter_and_plot_singleFile(files[1],100,3,'phase')
-    #filter_and_plot_singleFile(files[4],100,3,'phase')
-    #filter_and_plot_singleFile(files[20],10,3,'blm')
     
 
 if __name__ == "__main__":
