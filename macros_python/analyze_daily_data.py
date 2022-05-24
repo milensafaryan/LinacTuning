@@ -204,8 +204,6 @@ def filter_and_plot_multiFile(files,thresh,m,which):
             axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].fill_between(idx,delta,facecolor=colors[k],label='%s'%labels[k])
             axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].legend(loc='upper left', fancybox=True, fontsize='small')
             axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].xaxis.set_tick_params(direction='in', which='major')
-            if k==(numcol-1) or (k==(numcol*2-1) and numcol==int(len(listdf)/2)) or (k==(numcol*2-2) and numcol==int(len(listdf)/2+1)):
-                axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
             axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].grid(True)
             
             if which=='phase':
@@ -225,6 +223,8 @@ def filter_and_plot_multiFile(files,thresh,m,which):
                 fig.supylabel('Delta Loss (cnt)')
                 fig.suptitle('BLMs')
 
+    axs[numcol-1][0].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
+    axs[numcol-1][1].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
     plt.subplots_adjust(wspace=0, hspace=0)
     plt.subplots_adjust(bottom=0.1)
     plt.subplots_adjust(top=0.95)
@@ -273,7 +273,7 @@ def parse_args():
     parser.add_argument ('--i',  dest='datadir', default='/accelai/data/rshara01',
                          help="Input data directory path")
     parser.add_argument ('--d', dest='date', default='',
-                         help="End date/time to plot. Format %Y_%m_%d-%H")
+                         help="End date/time to plot. Format %Y_%m_%d-%H_%M_%S")
     #parser.add_argument ('--o',  dest='imgdir', default='',
     #                     help="Image save directory")
 
