@@ -1,7 +1,5 @@
-
 import numpy as np
-from scipy.fftpack import rfft, irfft, fftfreq
-from scipy.signal import chirp, find_peaks, find_peaks_cwt, peak_widths
+from scipy.signal import find_peaks
 import pylab as plt
 import matplotlib.transforms as mtransforms
 from matplotlib.widgets import RangeSlider,Slider, Button

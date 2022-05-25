@@ -1,6 +1,5 @@
 import numpy as np
-from scipy.fftpack import rfft, irfft, fftfreq
-from scipy.signal import chirp, find_peaks, find_peaks_cwt, peak_widths
+from scipy.signal import find_peaks
 import pylab as plt
 from matplotlib.pyplot import figure
 

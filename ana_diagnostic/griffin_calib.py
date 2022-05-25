@@ -1,14 +1,14 @@
 import io
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import chirp, find_peaks, find_peaks_cwt, peak_widths
+from scipy.signal import find_peaks
 
 t = [None]*4
 x = [None]*4 
 xplat = [None]*4
 
 med = [None]*4
-dt  = [219.782, 220.010, 220.243, 220.487] # external input: from fit
+dt  = [219.782, 220.010, 220.243, 220.487] # external input: from finddt.py
 
 path = r'/Users/rshara01-local/Desktop/Winter 2022/Study 12302021/2study12302021/'
 suffix = '_ALL.csv'
@@ -39,18 +39,6 @@ for i in range(4):
 
     print(med[i])
 
-'''
-x_normed = (x - x.min(0)) / x.ptp(0)
-peaksx, _ = find_peaks(x_normed, height=0.717, distance=31 ,prominence=0.27)
-pxx = []
-pxt = []
-for xx in peaksx:
-    pxt.append(t[int(xx)])
-    pxx.append(x_normed[int(xx)])
-
-pxt = np.asarray(pxt)
-pxx = np.asarray(pxx)
-'''
 
 nmz = ['1back1','1back2','1back3','2back1','3back1','8nsboth2']
 filenm = ['./files/%s.npz'%nmz[i] for i in range(len(nmz))]
@@ -100,24 +88,3 @@ plt.errorbar(dt,med, xerr=terr, linestyle='', c='b')
 plt.show()
 print(coef)
 
-'''
-plt.grid(color='k', linestyle='-', linewidth=2)
-delta = []
-for i in range (peaksx[0],peaksx[0]+1000):
-    delta.append( -x[i] + y[i-shift])
-
-plt.plot(t[peaksx[0]:peaksx[0]+1000],y_normed[peaksx[0]-172:peaksx[0]+1000-172], c='b')
-plt.plot(t[peaksx[0]:peaksx[0]+1000],x_normed[peaksx[0]:peaksx[0]+1000], c='r')
-plt.plot(t[peaksx[0]:peaksx[0]+1000], delta[:], c='g')
-plt.plot(pyt[:], pyy[:], marker='x', linewidth=0, c='r', label='')
-plt.plot(pxt[:], pxx[:], marker= 'x', linewidth=0, c = 'b',label='')
-plt.plot(pxt[:100],pxx[:100], marker='x',linewidth=0,  c='r')
-plt.plot(pxt[:100],pyy[:100], marker='x',linewidth=0,  c='b')
-plt.show()
-
-plt.scatter(delta[:],x[peaksx[0]:peaksx[0]+1000], c='m')
-plt.scatter(delta[:],y[peaksx[0]-172:peaksx[0]+1000-172], c='c')
-plt.scatter(pxx,pyy, c='y')
-plt.ylim(-0.1,0.4)
-plt.show()
-'''

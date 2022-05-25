@@ -1,7 +1,7 @@
 import io
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.signal import chirp, find_peaks, find_peaks_cwt, peak_widths
+from scipy.signal import find_peaks
 
 t = []
 x = [] 
@@ -53,7 +53,7 @@ pyt = np.asarray(pyt)
 pxt = np.asarray(pxt)
 pxx = np.asarray(pxx)
 
-
+## clean-up 8nsboth
 pxx = np.delete(pxx,[0,1,2,2578,2579,2580])
 pxt = np.delete(pxt,[0,1,2,2578,2579,2580])
 
@@ -201,10 +201,10 @@ plt.xlabel('T')
 plt.ylabel('V')
 plt.grid(color='k', linestyle='-', linewidth=2)
 
-plt.plot(t[peaksy[0]-1000:peaksy[-1]+1000], y_normed[peaksy[0]-1000:peaksy[-1]+1000], marker = '', c = 'r',label='M2-4 pickup')
-plt.plot(pyt[:], pyy[:], marker='x', linewidth=0, c='r', label='peaks M2-4')
-plt.plot(t[peaksx[0]-1000:peaksx[-1]+1000], x_normed[peaksx[0]-1000:peaksx[-1]+1000], marker = '', c = 'b',label='M1-4 pickup')
-plt.plot(pxt[:], pxx[:], marker= 'x', linewidth=0, c = 'b',label='peaks M1-4')
+plt.plot(t[peaksy[0]-1000:peaksy[-1]+1000], y_normed[peaksy[0]-1000:peaksy[-1]+1000], marker = '', c = 'r',label='signal 2')
+plt.plot(pyt[:], pyy[:], marker='x', linewidth=0, c='r', label='peaks signal 2')
+plt.plot(t[peaksx[0]-1000:peaksx[-1]+1000], x_normed[peaksx[0]-1000:peaksx[-1]+1000], marker = '', c = 'b',label='signal 1')
+plt.plot(pxt[:], pxx[:], marker= 'x', linewidth=0, c = 'b',label='peaks signal 1')
 #plt.legend()
 plt.ylim(-0.2,1.1)
 plt.show()
@@ -214,33 +214,3 @@ plt.grid(color='k', linestyle='-', linewidth=2)
 #plt.plot(pyt[1:],(dty), c='r')
 plt.plot(dt/0.8e-10, c='c')
 plt.show()
-'''
-plt.title("Beam pickup (aligned)")
-plt.xlabel('T')
-plt.ylabel('V')
-plt.grid(color='k', linestyle='-', linewidth=2)
-shift = int(np.median(dt/1.6e-10))
-print(shift,peaksy[3]-peaksy[2])
-plt.plot(t[peaksx[0]:peaksx[100]], y_normed[peaksy[0]:peaksy[100]], marker = '', c = 'r',label='M2-4')
-plt.plot(pxt[0:100], pxx[0:100], marker= 'x', linewidth=0, c = 'b',label='peaks M1-4')
-plt.plot(t[peaksx[0]:peaksx[100]], x_normed[peaksx[0]:peaksx[100]], marker = '',linewidth=1, linestyle=':',c = 'b',label='M1-4')
-plt.show()
-
-
-delta = []
-for i in range (peaksx[0],peaksx[0]+1000):
-    delta.append( -x[i] + y[i-172])
-
-plt.plot(t[peaksx[0]:peaksx[0]+1000],y[peaksx[0]-172:peaksx[0]+1000-172], c='b')
-plt.plot(t[peaksx[0]:peaksx[0]+1000],x[peaksx[0]:peaksx[0]+1000], c='r')
-plt.plot(t[peaksx[0]:peaksx[0]+1000], delta[:], c='g')
-plt.plot(pxt[:100],pxx[:100], marker='x',linewidth=0,  c='r')
-plt.plot(pxt[:100],pyy[:100], marker='x',linewidth=0,  c='b')
-plt.show()
-
-plt.scatter(delta[:],x[peaksx[0]:peaksx[0]+1000], c='m')
-plt.scatter(delta[:],y[peaksx[0]-172:peaksx[0]+1000-172], c='c')
-plt.scatter(pxx,pyy, c='y')
-plt.ylim(-0.1,0.4)
-plt.show()
-'''
