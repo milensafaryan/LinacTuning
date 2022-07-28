@@ -187,6 +187,9 @@ def filter_and_plot_multiFile(files,REF,thresh,which):
 
     print(len(listdf), len(listdf)/2)
 
+    list_delta_dict = []
+    delta_dict = {}
+
     for k,df in enumerate(listdf):
         # remove outlier samples
         #reject_outliers(df,m)
@@ -196,14 +199,27 @@ def filter_and_plot_multiFile(files,REF,thresh,which):
         delta = []
         idx = []
         for l,col in enumerate(colnames):
+            date = files[k].split('/')[-1]
+            date = date.split('_devicescan.csv.zip')[0]
+
+            # initialize delta_dict
+            delta_dict.update({col:0.0})
+ 
             if col in list(df.keys()) and col in list(refdf.keys()):
                 if len(df[col])>0 and len(refdf[col])>0:
                     if which=='blm':
-                        delta.append(np.median(df[col]))
+                        #delta.append(np.median(df[col]))
+                        delta.append(np.mean(df[col]))
                     else:
-                        delta.append(np.median(df[col]) - np.median(refdf[col]))
+                        #delta.append(np.median(df[col]) - np.median(refdf[col]))
+                        delta.append(np.mean(df[col]) - np.mean(refdf[col]))
+                        #if which=='phase' and col.find('B:')==-1:#(col.find('D1')!=-1 or col.find('D2')!=-1):
+                        #    print('when: ',date,'device: ',col, 'ref: ',np.mean(refdf[col]), 'now: ',np.mean(df[col]))
                     idx.append(l)
-            
+
+        [delta_dict.update({colnames[idxs]:delta[i]}) for i,idxs in enumerate(idx)]
+        list_delta_dict.append(delta_dict)
+
         axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].fill_between(idx,delta,facecolor=colors[k],label='%s'%labels[k])
         axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].legend(loc='upper left', fancybox=True, fontsize='small')
         axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].xaxis.set_tick_params(direction='in', which='major')
@@ -236,6 +252,9 @@ def filter_and_plot_multiFile(files,REF,thresh,which):
     #plt.show()
 
     plt.savefig('%s_%s_%s.png'%(labels[-1].split(' ')[0].replace('/','-'),labels[-1].split(' ')[1].replace(':','-'),which))
+    deltadf = pd.DataFrame.from_dict(list_delta_dict)
+    deltadf.to_csv(r'%s_%s_%s.csv'%(labels[-1].split(' ')[0].replace('/','-'),labels[-1].split(' ')[1].replace(':','-'),which),index=False,header=True)
+
 
 def get_files(path,date):
     files =[]
@@ -328,9 +347,9 @@ def main():
     files = get_files(path,date)
 
     filter_and_plot_multiFile(files,REF,100,'phase')
-    filter_and_plot_multiFile(files,REF,10,'blm')
-    filter_and_plot_multiFile(files,REF,10,'bph')
-    filter_and_plot_multiFile(files,REF,10,'bpv')
+    filter_and_plot_multiFile(files,REF,20,'blm')
+    filter_and_plot_multiFile(files,REF,20,'bph')
+    filter_and_plot_multiFile(files,REF,20,'bpv')
 
     #filter_and_plot_singleFile(files[4],1,3,'bph')
     
