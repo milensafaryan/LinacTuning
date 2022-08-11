@@ -12,16 +12,16 @@ def read_data(filename,which):
     df = dataset.copy()
     if which=='phase':
         df =df.filter(regex = 'Time|F', axis=1)
-        df.drop(list(df.filter(regex='DRQF|SSDABF|PAH|D04|BP20')),axis=1,inplace=True)
+        df.drop(list(df.filter(regex='DRQF|SSDABF|PAH|D04|BP20|B:')),axis=1,inplace=True)
     elif which=='blm':
         df = df.filter(regex = 'Time|LM', axis=1)
-        df.drop(list(df.filter(regex='LMSM')),axis=1,inplace=True)
+        df.drop(list(df.filter(regex='LMSM|B:')),axis=1,inplace=True)
     elif which=='bph':
         df = df.filter(regex = 'Time|BPH|HP', axis=1)
-        df.drop(list(df.filter(regex='D04|BPH20')),axis=1,inplace=True)
+        df.drop(list(df.filter(regex='D04|BPH20|B:')),axis=1,inplace=True)
     elif which=='bpv':
         df = df.filter(regex = 'Time|BPV|VP', axis=1)
-        df.drop(list(df.filter(regex='D04|BPV20|PHAS')),axis=1,inplace=True)
+        df.drop(list(df.filter(regex='D04|BPV20|PHAS|B:')),axis=1,inplace=True)
 
     df['Time'] = pd.to_datetime(df['Time'])
     df.dropna(inplace=True)
@@ -31,10 +31,9 @@ def read_data(filename,which):
 
 def filter_noisy(df,threshold,verbose):
     cols = [ col for col in list(df.keys()) if col.find('Time')==-1]
-    dropcol = [col for col in cols if np.var(df[col])>threshold or np.var(df[col])==0]
+    dropcol = [col for col in cols if np.std(df[col])>threshold or np.var(df[col])==0]
     if verbose:
-        [ print(np.var(df[cols[i]])) for i in range(len(cols)) ]
-        print('idx: ',idx)
+        [ print(col,np.std(df[col])) for col in dropcol ]
 
     df.drop(columns=dropcol,inplace=True)
     
@@ -43,12 +42,15 @@ def filter_noisy(df,threshold,verbose):
 def reject_outliers(df,m=3):
     cols = [ col for col in list(df.keys()) if col.find('Time')==-1]
     df_sub = df.loc[:,cols]
+    '''
     iqr = df_sub.quantile(0.75, numeric_only=False) - df_sub.quantile(0.25, numeric_only=False)
-    lim = np.abs((df_sub - df_sub.median()) / iqr) < 2.22
-    
-    df.loc[:, cols] = df_sub.where(lim, np.nan)
+    df.loc[:, cols] = df_sub.where(np.abs((df_sub - df_sub.median()) / iqr) < 2.22, np.nan)    
+    '''
+    for col in cols:
+        if col.find('LM')!=-1:
+            continue
+        df.loc[:,col] = df_sub.where(df_sub[col]!=0.0,np.nan)
     df.dropna(subset=cols, inplace=True)
-
     
 def calc_delta(xref,x,idx):
     xref_m = [np.mean(xref[i]) for i in idx]
@@ -85,7 +87,7 @@ def plot_raw(df,start,stop,which):
 
 def plot_phases_norm(df,start,stop):
     plt.grid(color='k', linestyle='-', linewidth=1.)
-    plt.ylim(-0.05,8.05)
+    plt.ylim(-0.05,180.05)
     plt.xlabel('Timestamp')
     plt.ylabel('Phase (normalized)')
     plt.title("BPM Phases")
@@ -143,15 +145,16 @@ def plot_one_avg(df,which):
 
     plt.show()
     
-def filter_and_plot_singleFile(filename,thresh,m,which):
+def filter_and_plot_singleFile(filename,thresh,which):
     plt.rc("figure",figsize=(10,6))
     plt.rc("axes",prop_cycle= plt.cycler("color", plt.cm.tab20.colors))
     
     df = read_data(filename,which)
-    # remove noisy devices
-    filter_noisy(df,thresh,False)
     # remove outlier samples from devices
-    reject_outliers(df,m)
+    reject_outliers(df)
+
+    # remove noisy devices
+    filter_noisy(df,thresh,True)
     
     # plot raw BPM phase data
     x = (len(df.keys())-1)
@@ -173,6 +176,7 @@ def filter_and_plot_multiFile(files,REF,thresh,which):
     overlap.difference_update(['aqua','ivory','white','lime','chocolate','gold'])
     colors = [mcolors.XKCD_COLORS[f'xkcd:{color_name}'].upper() for color_name in sorted(overlap)]    
     labels = get_labels(files)
+    lbls = [l.split(' ')[1] for l in labels]
 
     listdf = [None]*len(files)
     
@@ -188,13 +192,18 @@ def filter_and_plot_multiFile(files,REF,thresh,which):
     print(len(listdf), len(listdf)/2)
 
     list_delta_dict = []
-    delta_dict = {}
 
+    reject_outliers(refdf)
+    filter_noisy(refdf,thresh,False)
+    
     for k,df in enumerate(listdf):
         # remove outlier samples
-        #reject_outliers(df,m)
+        reject_outliers(df)
         # remove noisy
         filter_noisy(df,thresh,False)
+
+        # initialize delta_dict
+        delta_dict = {}
 
         delta = []
         idx = []
@@ -202,50 +211,51 @@ def filter_and_plot_multiFile(files,REF,thresh,which):
             date = files[k].split('/')[-1]
             date = date.split('_devicescan.csv.zip')[0]
 
-            # initialize delta_dict
-            delta_dict.update({col:0.0})
- 
+            delta_dict.update({col : 0.0})
+            
             if col in list(df.keys()) and col in list(refdf.keys()):
                 if len(df[col])>0 and len(refdf[col])>0:
                     if which=='blm':
-                        #delta.append(np.median(df[col]))
-                        delta.append(np.mean(df[col]))
+                        delta.append(np.median(df[col]))
+                        #delta.append(np.mean(df[col]))
                     else:
-                        #delta.append(np.median(df[col]) - np.median(refdf[col]))
-                        delta.append(np.mean(df[col]) - np.mean(refdf[col]))
-                        #if which=='phase' and col.find('B:')==-1:#(col.find('D1')!=-1 or col.find('D2')!=-1):
+                        delta.append(np.median(df[col]) - np.median(refdf[col]))
+                        #delta.append(np.mean(df[col]) - np.mean(refdf[col]))
+                        #if (which=='phase' and col.find('2OF')!=-1) or (which=='bph' and col.find('2OT')!=-1) or (which=='bpv' and col.find('2OT')!=-1):
                         #    print('when: ',date,'device: ',col, 'ref: ',np.mean(refdf[col]), 'now: ',np.mean(df[col]))
+
                     idx.append(l)
 
-        [delta_dict.update({colnames[idxs]:delta[i]}) for i,idxs in enumerate(idx)]
+        [delta_dict.update({colnames[idxs] : delta[i]}) for i,idxs in enumerate(idx)]
         list_delta_dict.append(delta_dict)
 
-        axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].fill_between(idx,delta,facecolor=colors[k],label='%s'%labels[k])
-        axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].legend(loc='upper left', fancybox=True, fontsize='small')
+        axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].fill_between(idx,delta,facecolor=colors[k],label='%s'%lbls[k])
+        axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].legend(loc='upper right', fancybox=True, fontsize='xx-large')
         axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].xaxis.set_tick_params(direction='in', which='major')
         axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].grid(True)
             
         if which=='phase':
-            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-4,4)
-            fig.supylabel(' Delta Phase (deg)')
-            fig.suptitle('BPM phases',fontsize=12)
+            #axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].fill_between(idx,delta,facecolor='k',alpha=0.7,label='%s'%lbls[k])
+            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-1.5,1.5)
+            fig.supylabel(' $\Delta$ Phase (deg)',fontsize=24)
+            fig.suptitle('BPM phases',fontsize=24)
         elif which=='bpv':    
-            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-1.5,1.5)
-            fig.supylabel('Delta Y (mm)')    
-            fig.suptitle("BPM Vertical positions")
+            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-0.4,0.4)
+            fig.supylabel('$\Delta$ Y (mm)',fontsize=24)    
+            fig.suptitle("BPM Vertical positions",fontsize=24)
         elif which=='bph':
-            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-1.5,1.5)
-            fig.supylabel('Delta X (mm)')    
-            fig.suptitle("BPM Horizontal positions")
+            axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(-0.5,0.5)
+            fig.supylabel('$\Delta$ X (mm)',fontsize=24)    
+            fig.suptitle("BPM Horizontal positions",fontsize=24)
         elif which=='blm':
             axs[int(k%(len(listdf)/2))][int(k/(len(listdf)/2))].set_ylim(0,3)
-            fig.supylabel('Delta Loss (cnt)')
-            fig.suptitle('BLMs')
+            fig.supylabel('Loss (cnt)',fontsize=24)
+            fig.suptitle('BLMs',fontsize=24)
 
-    axs[numcol-1][0].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
-    axs[numcol-1][1].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical')
+    axs[numcol-1][0].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical',fontsize=14)
+    axs[numcol-1][1].set_xticks(np.arange(len(colnames)),colnames, rotation = 'vertical',fontsize=14)
     plt.subplots_adjust(wspace=0, hspace=0)
-    plt.subplots_adjust(bottom=0.1)
+    plt.subplots_adjust(bottom=0.15)
     plt.subplots_adjust(top=0.95)
     plt.subplots_adjust(left=0.06)
     plt.subplots_adjust(right=0.98)
@@ -346,10 +356,10 @@ def main():
     REF = get_one_file(path,ref)
     files = get_files(path,date)
 
-    filter_and_plot_multiFile(files,REF,100,'phase')
-    filter_and_plot_multiFile(files,REF,20,'blm')
-    filter_and_plot_multiFile(files,REF,20,'bph')
-    filter_and_plot_multiFile(files,REF,20,'bpv')
+    filter_and_plot_multiFile(files,REF,10,'phase')
+    filter_and_plot_multiFile(files,REF,2,'blm')
+    filter_and_plot_multiFile(files,REF,1.5,'bph')
+    filter_and_plot_multiFile(files,REF,1.5,'bpv')
 
     #filter_and_plot_singleFile(files[4],1,3,'bph')
     
