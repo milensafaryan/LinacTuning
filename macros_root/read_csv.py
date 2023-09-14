@@ -5,6 +5,7 @@ import pandas as pd
 date = sys.argv[1]
 which = sys.argv[2]
 filename ='../data/%s/devicescan_%s.csv'%(date,which)
+#filename = r'/Users/rshara01/Desktop/LINAC_STUDY/BEAM STUDY 24MAY2022/devicescan.csv'
 
 df = pd.read_csv(r'%s'%filename)
 df.drop(list(df.filter(regex = 'Timestamp|iteration')), axis = 1, inplace = True)

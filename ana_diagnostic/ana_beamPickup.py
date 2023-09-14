@@ -10,7 +10,7 @@ z = []
 t2 = []
 
 #path = r'/Users/rshara01-local/Desktop/Winter 2022/Study 12302021/2study12302021/'
-path = r'/Users/rshara01-local/Desktop/Winter 2022/Study 12302021/'
+path = r'/Users/rshara01-local/Desktop/Griffin/Study 12302021/'
 suffix = '_ALL.csv'
 name = r'8nsboth2'
 filename = path + name + suffix

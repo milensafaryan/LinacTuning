@@ -76,7 +76,7 @@ x = []
 y = [] 
 z = []
 
-path = r'/Users/rshara01-local/Desktop/Winter 2022/Study 12302021/2study12302021/'
+path = r'/Users/rshara01-local/Desktop/Griffin/Study 12302021/2study12302021/'
 suffix = '_ALL.csv'
 filename = path + r'2back1' + suffix
 

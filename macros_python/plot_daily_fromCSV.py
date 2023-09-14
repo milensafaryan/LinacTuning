@@ -79,7 +79,7 @@ for i,w in enumerate(which):
             fig.suptitle('BPM phases',fontsize=20)
             
         elif w=='bph':
-            continue
+            #continue
             '''
             axs[int(k%(len(listdf[i])/2))][int(k/(len(listdf[i])/2))].fill_between(idx,listdf[i].iloc[k,:],facecolor='r',label='%2.2f'%k)
             axs[int(k%(len(listdf[i])/2))][int(k/(len(listdf[i])/2))].set_ylim(-0.5,0.5)
@@ -98,12 +98,16 @@ for i,w in enumerate(which):
             axs[int(k%(len(listdf[i])/2))][int(k/(len(listdf[i])/2))].legend(loc='upper right', fancybox=True, fontsize='medium')
             axs[int(k%(len(listdf[i])/2))][int(k/(len(listdf[i])/2))].xaxis.set_tick_params(direction='in', which='major')
             axs[int(k%(len(listdf[i])/2))][int(k/(len(listdf[i])/2))].grid(True)
-            
-            axs[k].fill_between(idx,listdf[i].iloc[k,:],facecolor='b',alpha=0.75,label='%d:00'%k)
-            axs[k].fill_between(idx,listdf[i-1].iloc[k,:],facecolor='r',alpha=0.75)
-            axs[k].set_ylim(-0.4,0.4)
+            '''
+            # axs[k].scatter(dist_data,listdf[i].iloc[k,:],color='b', linestyle='-',label='%d:00'%k)
+            axs[k].bar(dist_data,listdf[i].iloc[k,:], width=1.1,color='b', alpha=0.75,label='%d:00'%k)
+            #axs[k].scatter(dist_data,listdf[i-1].iloc[k,:],color='r',label='%d:00'%k)
+            axs[k].bar(dist_data,listdf[i-1].iloc[k,:], width=1.1,color='r', alpha=0.75,label='%d:00'%k)
+            #axs[k].fill_between(dist_data,listdf[i-1].iloc[k,:],facecolor='r',alpha=0.75)
+            axs[k].set_ylim(-0.25,0.25)
             #axs[k].legend(loc='upper right', fancybox=True, fontsize='xx-large')
             axs[k].xaxis.set_tick_params(direction='in', which='major')
+            axs[k].tick_params(axis='x',labelsize=15)
             axs[k].tick_params(axis='y',labelsize=15)
             axs[k].grid(True)
             axs[k].text(0.955, 0.75, '%d:00'%(k+1), transform=axs[k].transAxes, color='k', alpha=0.99,fontsize='xx-large',verticalalignment='top')
@@ -118,8 +122,9 @@ for i,w in enumerate(which):
             #axs[0][0].text(0.05, 0.9, str1, transform=axs[0][0].transAxes, color='r', alpha=0.65,fontsize='x-large',verticalalignment='top')
             #axs[0][0].text(0.05, 0.5, str2, transform=axs[0][0].transAxes, color='b', alpha=0.65,fontsize='x-large',verticalalignment='top')
             fig.supylabel(' $\Delta$X and $\Delta$Y (mm)',fontsize=20)
-            fig.suptitle('BPM positions',fontsize=20)
-            '''
+            fig.supxlabel('Distance along linac (m)',fontsize=20)
+            #fig.suptitle('BPM positions',fontsize=20)
+            
             
     #axs[numcol-1][0].set_xticks(idx,cols, rotation = 'vertical',fontsize=12)
     #axs[numcol-1][1].set_xticks(idx,cols, rotation = 'vertical',fontsize=12)
