@@ -1,0 +1,44 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+file = r'/devicescan_vernier_360.csv'
+dataset = pd.read_csv(file)
+desired_rows = [ 'L:LVPADJ(R)', 'L:L0PADJ(R)','L:L7PADJ(R)',"L:D03BF(R)", "L:D11BF(R)", "L:D12BF(R)", "L:D13BF(R)", "L:D21BF(R)", "L:D22BF(R)", "L:D23BF(R)", "L:D31BF(R)", "L:D32BF(R)", "L:D33BF(R)", "L:D34BF(R)",  "L:D41BF(R)","L:D42BF(R)", "L:D43BF(R)", "L:D44BF(R)", "L:D51BF(R)" , "L:D52BF(R)", "L:D53BF(R)", "L:D54BF(R)", "L:D61BF(R)", "L:D62BF(R)", "L:D63BF(R)", "L:D64BF(R)", "L:D71BF(R)", "L:D72BF(R)", "L:D73BF(R)", "L:D74BF(R)"]
+dataset[desired_rows]
+distances = {"L:D03BF": 80.9, "L:D11BF": 83.7, "L:D12BF": 85.4, "L:D13BF": 87.1, "L:D21BF": 90.5, "L:D22BF": 92.3, "L:D23BF": 94.2, "L:D31BF": 98.1, "L:D32BF": 100.1, "L:D33BF": 102.2, "L:D34BF": 104.2, "L:D41BF": 106.3, "L:D42BF": 108.5, "L:D43BF": 110.6, "L:D44BF": 112.8, "L:D51BF": 115.1, "L:D52BF": 117.3, "L:D53BF": 119.6, "L:D54BF": 121.9, "L:D61BF": 124.3, "L:D62BF": 126.7, "L:D63BF": 129.1, "L:D64BF": 131.5, "L:D71BF": 133.9, "L:D72BF": 136.4, "L:D73BF": 138.9, "L:D74BF": 141.4}
+
+
+#finding initial parameters of my sin function
+max_value = dataset["L:D12BF(R)"].max()
+min_value = dataset["L:D12BF(R)"].min()
+amplitude = (a - b)/2
+new_period = np.absolute(dataset['L:LVPADJ(R)'][np.argmax(dataset["L:D12BF(R)"])] - dataset['L:LVPADJ(R)'][np.argmin(dataset["L:D11BF(R)"])])
+#fitting
+from scipy.optimize import curve_fit
+guess_freq = np.pi / new_period
+guess_amp = amplitude
+guess_phase = 0
+guess_offset = 0
+p0 = [guess_freq, guess_amp, guess_phase, guess_offset]
+
+def sin_fn(x, freq, amplitude, phase, offset):
+  return np.sin(x*freq + phase) * amplitude + offset
+
+fit = curve_fit(sin_fn, dataset['L:LVPADJ(R)'] - dataset['L:LVPADJ(R)'].min(), dataset["L:D12BF(R)"] - max_value + amplitude, p0 = p0)
+
+fit_A = fit[0][1]
+fit_B = fit[0][0]
+fit_C = fit[0][2]
+fit_D = fit[0][3]
+print(fit_A, fit_B, fit_C, fit_D)
+fitted_sin = sin_fn(dataset['L:LVPADJ(R)'] - dataset['L:LVPADJ(R)'].min(), fit[0][0], fit[0][1], fit[0][2], fit[0][3])
+plt.plot()
+plt.plot(dataset['L:LVPADJ(R)'] - dataset['L:LVPADJ(R)'].min(), fitted_sin, color = "black")
+plt.plot(dataset['L:LVPADJ(R)'] - dataset['L:LVPADJ(R)'].min(), dataset["L:D12BF(R)"] - max_value + amplitude)
+plt.xlabel("RF cavity phase")
+plt.title("BPM Phase Based on RF Phase")
+plt.ylabel('BPM L:D12BF longitudinal phase')
+plt.xlim(0, 360)
+
+plt.show()
